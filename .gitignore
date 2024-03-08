@@ -12,3 +12,4 @@ mods/custom_texture_pack.lua
 mods/devtools.lua
 Mods/*
 mods/LoadSteamoddedMods.lua
+.git ShamPack/*
