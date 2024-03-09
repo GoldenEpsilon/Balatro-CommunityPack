@@ -35,6 +35,54 @@ function UltimAce()
     ]])
 end
 
+function Baba()
+    GE:add_item(MOD_ID, "Joker", "j_baba", {
+        rarity = 3,
+        cost = 5,
+        name = "Baba",
+        set = "Joker",
+        config = {
+            extra = {
+                x_mult = 3,
+                type1 = "Pair",
+                type2 = "High Card"
+            }
+        },
+        loc_var_func = function(card) return {card.ability.extra.x_mult, card.ability.extra.type1, card.ability.extra.type2} end
+    },{
+        name = "Baba",
+        text = {
+            "Gives {X:red,C:white} X#1# {} Mult if played hand is a",
+            "{C:attention}#2#{} or {C:attention}#3#{}"
+        }
+    });
+
+
+    injectHead("card.lua", "Card:calculate_joker", [[
+        if self.ability.set == "Joker" and not self.debuff then
+            if context.cardarea == G.jokers then
+                if not context.before and not context.after then
+                    if self.ability.name == 'Baba' and context.poker_hands then
+                        local baba = true;
+                        for k, v in pairs(context.poker_hands) do
+                            if k ~= "top" and next(v) and k ~= self.ability.extra.type1 and k ~= self.ability.extra.type2 then
+                                baba = false
+                            end
+                        end
+                        if baba then
+                            return {
+                                message = localize{type='variable',key='a_xmult',vars={self.ability.extra.x_mult}},
+                                colour = G.C.RED,
+                                Xmult_mod = self.ability.extra.x_mult
+                            }
+                        end
+                    end
+                end
+            end
+        end
+    ]])
+end
+
 function Passport_Joker()
     GE:add_item(MOD_ID, "Joker", "j_passport", {
         rarity = 3,
@@ -156,6 +204,7 @@ table.insert(mods,
             GE:init()
             UltimAce()
             Passport_Joker()
+            Baba()
             GE:refresh_items()
         end,
 
