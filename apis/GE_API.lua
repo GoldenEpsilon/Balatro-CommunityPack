@@ -25,8 +25,8 @@ function GE:init()
             loc_vars = self.config.center.loc_var_func(self);
         end
         local badges]]);
-        inject("functions/common_events.lua", "generate_card_ui", ", vars = loc_vars%}", ", vars = (specific_vars and #specific_vars and specific_vars) or loc_vars}");
-
+        inject("functions/common_events.lua", "generate_card_ui", ", vars = loc_vars%}", ", vars = ((specific_vars and #specific_vars ~= 0) and specific_vars) or loc_vars}");
+        
         injectTail("game.lua", "Game:init_item_prototypes", [[
             GE:refresh_items();
 ]]);
@@ -102,28 +102,10 @@ function GE:refresh_items()
         table.sort(v, function(a, b) return a.order < b.order end)
     end
 
-    -- Update localization
-    for g_k, group in pairs(G.localization) do
-        if g_k == 'descriptions' then
-            for _, set in pairs(group) do
-                for _, center in pairs(set) do
-                    center.text_parsed = {}
-                    for _, line in ipairs(center.text) do
-                        center.text_parsed[#center.text_parsed + 1] = loc_parse_string(line)
-                    end
-                    center.name_parsed = {}
-                    for _, line in ipairs(type(center.name) == 'table' and center.name or { center.name }) do
-                        center.name_parsed[#center.name_parsed + 1] = loc_parse_string(line)
-                    end
-                    if center.unlock then
-                        center.unlock_parsed = {}
-                        for _, line in ipairs(center.unlock) do
-                            center.unlock_parsed[#center.unlock_parsed + 1] = loc_parse_string(line)
-                        end
-                    end
-                end
-            end
-        end
+    local localization = love.filesystem.getInfo('localization/'..G.SETTINGS.language..'.lua')
+    if localization ~= nil then
+      self.localization = assert(loadstring(love.filesystem.read('localization/'..G.SETTINGS.language..'.lua')))()
+      init_localization();
     end
 
     for k, v in pairs(G.P_JOKER_RARITY_POOLS) do 

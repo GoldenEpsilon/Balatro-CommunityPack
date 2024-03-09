@@ -156,6 +156,7 @@ table.insert(mods,
             GE:init()
             UltimAce()
             Passport_Joker()
+            GE:refresh_items()
         end,
 
         on_disable = function()
