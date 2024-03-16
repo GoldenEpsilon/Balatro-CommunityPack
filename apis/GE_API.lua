@@ -3,6 +3,7 @@ GE = {
     items = {},
     item_keys = {},
     injections = {},
+    card_effects = {},
 }
 
 function GE:init()
@@ -30,6 +31,126 @@ function GE:init()
         injectTail("game.lua", "Game:init_item_prototypes", [[
             GE:refresh_items();
 ]]);
+        
+    injectTail("card.lua", "Card:set_ability", [[
+        GE:card_effect(self, {}, "init");
+    ]]);
+    injectHead("card.lua", "Card:calculate_joker", [[
+        if self.ability.set == "Joker" and not self.debuff then
+            if context.open_booster then
+                local ret_val = GE:card_effect(self, context, "open_booster")
+                if ret_val then return ret_val end
+            elseif context.buying_card then
+                local ret_val = GE:card_effect(self, context, "buy_card")
+                if ret_val then return ret_val end
+            elseif context.selling_self then
+                local ret_val = GE:card_effect(self, context, "sell_self")
+                if ret_val then return ret_val end
+            elseif context.selling_card then
+                local ret_val = GE:card_effect(self, context, "sell_card")
+                if ret_val then return ret_val end
+            elseif context.reroll_shop then
+                local ret_val = GE:card_effect(self, context, "reroll_shop")
+                if ret_val then return ret_val end
+            elseif context.ending_shop then
+                local ret_val = GE:card_effect(self, context, "end_shop")
+                if ret_val then return ret_val end
+            elseif context.skip_blind then
+                local ret_val = GE:card_effect(self, context, "skip_blind")
+                if ret_val then return ret_val end
+            elseif context.skipping_booster then
+                local ret_val = GE:card_effect(self, context, "skip_booster")
+                if ret_val then return ret_val end
+            elseif context.playing_card_added and not sopen_boosterelf.getting_sliced then
+                local ret_val = GE:card_effect(self, context, "add_card")
+                if ret_val then return ret_val end
+            elseif context.first_hand_drawn then
+                local ret_val = GE:card_effect(self, context, "start_round")
+                if ret_val then return ret_val end
+            elseif context.setting_blind and not self.getting_sliced then
+                local ret_val = GE:card_effect(self, context, "setup_round")
+                if ret_val then return ret_val end
+            elseif context.destroying_card and not context.blueprint then
+                local ret_val = GE:card_effect(self, context, "pre_destroy_card")
+                if ret_val then return ret_val end
+            elseif context.cards_destroyed then
+                local ret_val = GE:card_effect(self, context, "destroy_card")
+                if ret_val then return ret_val end
+            elseif context.remove_playing_cards then
+                local ret_val = GE:card_effect(self, context, "post_destroy_card")
+                if ret_val then return ret_val end
+            elseif context.using_consumable then
+                local ret_val = GE:card_effect(self, context, "use_consumable")
+                if ret_val then return ret_val end
+            elseif context.debuffed_hand then
+                local ret_val = GE:card_effect(self, context, "play_debuffed")
+                if ret_val then return ret_val end
+            elseif context.pre_discard then
+                local ret_val = GE:card_effect(self, context, "pre_discard")
+                if ret_val then return ret_val end
+            elseif context.discard then
+                local ret_val = GE:card_effect(self, context, "discard")
+                if ret_val then return ret_val end
+            elseif context.end_of_round then
+                if context.individual then
+                    if context.cardarea == G.play then
+                        local ret_val = GE:card_effect(self, context, "play_individual_end_round")
+                        if ret_val then return ret_val end
+                    end
+                    if context.cardarea == G.hand then
+                        local ret_val = GE:card_effect(self, context, "hand_individual_end_round")
+                        if ret_val then return ret_val end
+                    end
+                elseif context.repetition then
+                    if context.cardarea == G.play then
+                        local ret_val = GE:card_effect(self, context, "play_repetition_end_round")
+                        if ret_val then return ret_val end
+                    end
+                    if context.cardarea == G.hand then
+                        local ret_val = GE:card_effect(self, context, "hand_repetition_end_round")
+                        if ret_val then return ret_val end
+                    end
+                elseif not context.blueprint then
+                    local ret_val = GE:card_effect(self, context, "end_round")
+                    if ret_val then return ret_val end
+                end
+            elseif context.individual then
+                if context.cardarea == G.play then
+                    local ret_val = GE:card_effect(self, context, "play_individual")
+                    if ret_val then return ret_val end
+                end
+                if context.cardarea == G.hand then
+                    local ret_val = GE:card_effect(self, context, "hand_individual")
+                    if ret_val then return ret_val end
+                end
+            elseif context.repetition then
+                if context.cardarea == G.play then
+                    local ret_val = GE:card_effect(self, context, "play_repetition")
+                    if ret_val then return ret_val end
+                end
+                if context.cardarea == G.hand then
+                    local ret_val = GE:card_effect(self, context, "hand_repetition")
+                    if ret_val then return ret_val end
+                end
+            elseif context.other_joker then
+                local ret_val = GE:card_effect(self, context, "other_joker")
+                if ret_val then return ret_val end
+            else
+                if context.cardarea == G.jokers then
+                    if context.before then
+                        local ret_val = GE:card_effect(self, context, "pre_joker")
+                        if ret_val then return ret_val end
+                    elseif context.after then
+                        local ret_val = GE:card_effect(self, context, "post_joker")
+                        if ret_val then return ret_val end
+                    else
+                        local ret_val = GE:card_effect(self, context, "joker")
+                        if ret_val then return ret_val end
+                    end
+                end
+            end
+        end
+    ]])
     end
 end
 
@@ -42,6 +163,22 @@ function GE:inject(mod_id, path, function_name, to_replace, replacement)
     end
     table.insert(GE.injections[mod_id], {path = path, function_name = function_name, to_replace = to_replace, replacement = replacement})
     inject(path, function_name, to_replace:gsub("([^%w])", "%%%1"), replacement:gsub("([^%w])", "%%%1"));
+end
+
+function GE:card_effect(self, context, context_name)
+    if self.ability then
+        for k, v in pairs(GE.items) do
+            for k, v in pairs(v) do
+                if v.data.abilities and v.pool == self.ability.set and v.data.name == self.ability.name then
+                    for k, v in pairs(v.data.abilities) do
+                        if k == context_name then
+                            return v(self, context);
+                        end
+                    end
+                end
+            end
+        end
+    end
 end
 
 -- Note: px and py are optional
@@ -137,8 +274,24 @@ end
 
 function GE:disable(mod_id)
     for k, v in pairs(GE.items[mod_id]) do
-        G.P_JOKER_RARITY_POOLS[G.P_CENTER_POOLS[v.pool][v.id].rarity] = nil;
-        G.P_CENTER_POOLS[v.pool][v.id] = nil;
+        local i = 0
+        for k, v2 in pairs(G.P_CENTER_POOLS[v.pool]) do
+            if v.data.name == v2.name then
+                i = k;
+                break;
+            end
+        end
+        G.P_CENTER_POOLS[v.pool][i] = nil;
+        i = 0;
+        for k, v2 in pairs(G.P_JOKER_RARITY_POOLS[v.data.rarity]) do
+            if v.data.name == v2.name then
+                i = k;
+                break;
+            end
+        end
+        if i ~= 0 then
+            G.P_JOKER_RARITY_POOLS[v.data.rarity][i] = nil;
+        end
         G.localization.descriptions[v.pool][v.id] = nil;
         G.P_CENTERS[v.id] = nil
     end

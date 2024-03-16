@@ -48,7 +48,7 @@ function Baba()
                 type2 = "High Card"
             }
         },
-        loc_var_func = function(card) return {card.ability.extra.x_mult, card.ability.extra.type1, card.ability.extra.type2} end
+        loc_var_func = function(self) return {self.ability.extra.x_mult, self.ability.extra.type1, self.ability.extra.type2} end
     },{
         name = "Baba",
         text = {
@@ -83,6 +83,216 @@ function Baba()
     ]])
 end
 
+function Missing_Texture()
+    GE:add_item(MOD_ID, "Joker", "j_missingtexture", {
+        rarity = 2,
+        cost = 5,
+        name = "Missing Texture",
+        set = "Joker",
+        config = {
+            extra = {
+            }
+        },
+        loc_var_func = function(self) return {} end
+    },{
+        name = "Missing Texture",
+        text = {
+            "Two Pair counts as",
+            "Four Of A Kind"
+        }
+    });
+
+
+    injectHead("card.lua", "Card:calculate_joker", [[
+        if self.ability.set == "Joker" and not self.debuff then
+        end
+    ]])
+end
+
+function Free_Sample()
+    GE:add_item(MOD_ID, "Joker", "j_freesample", {
+        rarity = 1,
+        cost = 4,
+        name = "Free Sample",
+        set = "Joker",
+        config = {
+            to_do_poker_hand = nil;
+            extra = {
+                hands = 1
+            }
+        },
+        loc_var_func = function(self) return {self.ability.to_do_poker_hand} end,
+        abilities = {
+            init = function (self)
+                local _poker_hands = {}
+                for k, v in pairs(G.GAME.hands) do
+                    if v.visible then _poker_hands[#_poker_hands+1] = k end
+                end
+                local old_hand = self.ability.to_do_poker_hand
+                self.ability.to_do_poker_hand = nil
+
+                while not self.ability.to_do_poker_hand do
+                    self.ability.to_do_poker_hand = pseudorandom_element(_poker_hands, pseudoseed((self.area and self.area.config.type == 'title') and 'false_freesample' or 'freesample'))
+                    if self.ability.to_do_poker_hand == old_hand then self.ability.to_do_poker_hand = nil end
+                end
+            end,
+
+            post_joker = function(self, context) 
+                if context.scoring_name == self.ability.to_do_poker_hand then
+                    G.E_MANAGER:add_event(Event({func = function()
+                        ease_hands_played(self.ability.extra.hands)
+                        card_eval_status_text(context.blueprint_card or self, 'extra', nil, nil, nil, {message = localize{type = 'variable', key = 'a_hands', vars = {self.ability.extra.hands}}})
+                    return true end }))
+                end
+                
+                local _poker_hands = {}
+                for k, v in pairs(G.GAME.hands) do
+                    if v.visible then _poker_hands[#_poker_hands+1] = k end
+                end
+                local old_hand = self.ability.to_do_poker_hand
+                self.ability.to_do_poker_hand = nil
+
+                while not self.ability.to_do_poker_hand do
+                    self.ability.to_do_poker_hand = pseudorandom_element(_poker_hands, pseudoseed((self.area and self.area.config.type == 'title') and 'false_freesample' or 'freesample'))
+                    if self.ability.to_do_poker_hand == old_hand then self.ability.to_do_poker_hand = nil end
+                end
+            end
+        }
+    },{
+        name = "Free Sample",
+        text = {
+            "+1 hand if poker hand is a {C:attention}#1#{}",
+            "Poker hand changes every hand"
+        }
+    });
+end
+
+function Not_Found()
+    GE:add_item(MOD_ID, "Joker", "j_notfound", {
+        rarity = 1,
+        cost = 4,
+        name = "Joker Not Found",
+        set = "Joker",
+        config = {
+            extra = {
+                chip_mod = 404,
+                odds = 4
+            }
+        },
+        loc_var_func = function(self) return {G.GAME.probabilities.normal, self.ability.extra.odds, self.ability.extra.chip_mod} end,
+        abilities = {
+            joker = function(self, context) 
+                if pseudorandom('notfound') < G.GAME.probabilities.normal/self.ability.extra.odds then
+                    return {
+                        message = localize{type='variable',key='a_chips',vars={self.ability.extra.chip_mod}},
+                        chip_mod = self.ability.extra.chip_mod,
+                    }
+                end
+            end
+        }
+    },{
+        name = "Joker Not Found",
+        text = {
+            "{C:attention}#1#{} in {C:attention}#2#{} chance to add {C:chips}#3#{} chips" -- should be set chips to 404, but that's hard to do
+        }
+    });
+    
+    -- Inject doesn't work on this function yet...
+    --GE:inject(MOD_ID, "functions/state_events.lua", "G.FUNCS.evaluate_play", "if effects.jokers.chip_mod then hand_chips = mod_chips(hand_chips + effects.jokers.chip_mod);extras.hand_chips = true end", 
+    -- [[if effects.jokers.chip_mod then hand_chips = mod_chips(hand_chips + effects.jokers.chip_mod);extras.hand_chips = true end
+    --if effects.jokers.chip_set_mod then hand_chips = mod_chips(effects.jokers.chip_set_mod);extras.hand_chips = true end]]);
+    
+    injectHead("card.lua", "Card:calculate_joker", [[
+        if self.ability.set == "Joker" and not self.debuff then
+        end
+    ]])
+end
+
+function Executioner()
+    GE:add_item(MOD_ID, "Joker", "j_executioner", {
+        rarity = 3,
+        cost = 8,
+        name = "Executioner",
+        set = "Joker",
+        config = {
+            to_do_poker_hand = nil
+        },
+        loc_var_func = function(self) return {self.ability.to_do_poker_hand} end,
+        abilities = {
+            init = function (self)
+                local _poker_hands = {}
+                for k, v in pairs(G.GAME.hands) do
+                    if v.visible then _poker_hands[#_poker_hands+1] = k end
+                end
+                local old_hand = self.ability.to_do_poker_hand
+                self.ability.to_do_poker_hand = nil
+
+                while not self.ability.to_do_poker_hand do
+                    self.ability.to_do_poker_hand = pseudorandom_element(_poker_hands, pseudoseed((self.area and self.area.config.type == 'title') and 'false_executioner' or 'executioner'))
+                    if self.ability.to_do_poker_hand == old_hand then self.ability.to_do_poker_hand = nil end
+                end
+            end,
+            end_round = function (self)
+                local _poker_hands = {}
+                for k, v in pairs(G.GAME.hands) do
+                    if v.visible then _poker_hands[#_poker_hands+1] = k end
+                end
+                local old_hand = self.ability.to_do_poker_hand
+                self.ability.to_do_poker_hand = nil
+
+                while not self.ability.to_do_poker_hand do
+                    self.ability.to_do_poker_hand = pseudorandom_element(_poker_hands, pseudoseed((self.area and self.area.config.type == 'title') and 'false_executioner' or 'executioner'))
+                    if self.ability.to_do_poker_hand == old_hand then self.ability.to_do_poker_hand = nil end
+                end
+            end,
+            start_round = function(self, context) 
+                if not context.blueprint then
+                    local eval = function() return G.GAME.current_round.hands_played == 0 end
+                    juice_card_until(self, eval, true)
+                end
+            end,
+            post_joker = function (self, context)
+                if G.GAME.current_round.hands_played == 0 and context.scoring_name == self.ability.to_do_poker_hand then
+                    local destroyed_cards = {}
+                    for i=1, #context.scoring_hand do
+                        destroyed_cards[#destroyed_cards + 1] = context.scoring_hand[i]
+                        if context.scoring_hand[i].ability.name == 'Glass Card' then 
+                            context.scoring_hand[i]:shatter()
+                        else
+                            context.scoring_hand[i]:start_dissolve()
+                        end
+                    end
+                    if destroyed_cards[1] then 
+                        for j=1, #G.jokers.cards do
+                            eval_card(G.jokers.cards[j], {cardarea = G.jokers, remove_playing_cards = true, removed = destroyed_cards})
+                        end
+                    end
+                    return 
+                    {
+                        message = "Executed!",
+                        colour = G.C.FILTER,
+                        delay = 0.45, 
+                        card = self
+                    }
+                end
+            end
+        }
+    },{
+        name = "Executioner",
+        text = {
+            "If first played poker hand of the round is a {C:attention}#1#{},",
+            "destroy all cards scored in it.",
+            "Poker hand changes every round"
+        }
+    });
+
+
+    injectHead("card.lua", "Card:calculate_joker", [[
+        if self.ability.set == "Joker" and not self.debuff then
+        end
+    ]])
+end
+
 function Passport_Joker()
     GE:add_item(MOD_ID, "Joker", "j_passport", {
         rarity = 3,
@@ -91,13 +301,13 @@ function Passport_Joker()
         set = "Joker",
         config = {
         },
-        loc_var_func = function(card) 
+        loc_var_func = function(self) 
             local other_joker = nil
             if G.jokers then
                 for i = 1, #G.jokers.cards do
-                    if G.jokers.cards[i] == card then other_joker = G.jokers.cards[i+1] end
+                    if G.jokers.cards[i] == self then other_joker = G.jokers.cards[i+1] end
                 end
-                if other_joker and other_joker ~= card then
+                if other_joker and other_joker ~= self then
                     if ((other_joker.ability.t_chips or other_joker.ability.t_mult or other_joker.ability.x_mult) or
                     other_joker.ability.extra and (other_joker.extra.chip_mod or other_joker.extra.chips or other_joker.ability.extra.mult or other_joker.ability.extra.x_mult)) then
                         return {other_joker.ability.name .. " is compatible"} 
@@ -193,7 +403,7 @@ table.insert(mods,
         mod_id = "community_pack",
         name = "Community Joker Pack",
         author = "Golden Epsilon, Everyone!",
-        version = "0.1",
+        version = "0.2",
         description = {
             "Adds custom jokers",
             "that were submitted",
@@ -204,7 +414,10 @@ table.insert(mods,
             GE:init()
             UltimAce()
             Passport_Joker()
+            Not_Found()
+            Free_Sample()
             Baba()
+            Executioner()
             GE:refresh_items()
         end,
 
