@@ -93,7 +93,14 @@ function Missing_Texture()
             extra = {
             }
         },
-        loc_var_func = function(self) return {} end
+        loc_var_func = function(self) return {} end,
+        abilities = {
+            pre_joker = function(self, context)
+                if next(context.poker_hands["Pair"]) then
+                    context.poker_hands["Four of a Kind"] = context.poker_hands["Pair"];
+                end
+            end,
+        }
     },{
         name = "Missing Texture",
         text = {
@@ -101,12 +108,6 @@ function Missing_Texture()
             "Four Of A Kind"
         }
     });
-
-
-    injectHead("card.lua", "Card:calculate_joker", [[
-        if self.ability.set == "Joker" and not self.debuff then
-        end
-    ]])
 end
 
 function Free_Sample()
@@ -202,10 +203,6 @@ function Not_Found()
     -- [[if effects.jokers.chip_mod then hand_chips = mod_chips(hand_chips + effects.jokers.chip_mod);extras.hand_chips = true end
     --if effects.jokers.chip_set_mod then hand_chips = mod_chips(effects.jokers.chip_set_mod);extras.hand_chips = true end]]);
     
-    injectHead("card.lua", "Card:calculate_joker", [[
-        if self.ability.set == "Joker" and not self.debuff then
-        end
-    ]])
 end
 
 function Executioner()
@@ -285,12 +282,6 @@ function Executioner()
             "Poker hand changes every round"
         }
     });
-
-
-    injectHead("card.lua", "Card:calculate_joker", [[
-        if self.ability.set == "Joker" and not self.debuff then
-        end
-    ]])
 end
 
 function Passport_Joker()
@@ -418,6 +409,7 @@ table.insert(mods,
             Free_Sample()
             Baba()
             Executioner()
+            Missing_Texture()
             GE:refresh_items()
         end,
 
