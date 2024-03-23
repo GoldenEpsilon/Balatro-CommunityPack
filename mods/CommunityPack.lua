@@ -110,6 +110,43 @@ function Missing_Texture()
     });
 end
 
+function Background_Joker()
+    GE:add_item(MOD_ID, "Joker", "j_background", {
+        rarity = 2,
+        cost = 5,
+        name = "Background",
+        set = "Joker",
+        config = {
+            extra = {
+            }
+        },
+        loc_var_func = function(self) return {} end,
+        abilities = {
+            joker = function(self, context)
+                local ret_val = -1;
+                for k, v in pairs(context.poker_hands) do
+                    if next(v) then ret_val = ret_val + 1 end
+                end
+                if ret_val < 0 then ret_val = 0 end
+                if next(context.poker_hands["Pair"]) then
+                    context.poker_hands["Four of a Kind"] = context.poker_hands["Pair"];
+                end
+                return {
+                    message = localize{type='variable',key='a_mult',vars={ret_val * ret_val}},
+                    mult_mod = ret_val * ret_val
+                }
+            end,
+        }
+    },{
+        name = "Background",
+        text = {
+            "Give mult equal the square of",
+            "the number of hands",
+            "that can be made out of your scored cards"
+        }
+    });
+end
+
 function Inverted_Joker()
     GE:add_item(MOD_ID, "Joker", "j_inverted", {
         rarity = 3,
@@ -457,6 +494,7 @@ table.insert(mods,
             Executioner()
             Missing_Texture()
             Inverted_Joker()
+            Background_Joker()
             GE:refresh_items()
         end,
 
