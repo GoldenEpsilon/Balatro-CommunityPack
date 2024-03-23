@@ -104,8 +104,56 @@ function Missing_Texture()
     },{
         name = "Missing Texture",
         text = {
-            "Two Pair counts as",
-            "Four Of A Kind"
+            "{C:attention}Two Pair{} counts as",
+            "{C:attention}Four Of A Kind{}"
+        }
+    });
+end
+
+function Inverted_Joker()
+    GE:add_item(MOD_ID, "Joker", "j_inverted", {
+        rarity = 3,
+        cost = 5,
+        name = "Inverted Joker",
+        set = "Joker",
+        config = {
+            extra = 3
+        },
+        loc_var_func = function(self) return {} end,
+        abilities = {
+            init = function(self)
+                self.ability.invert_rounds = 0;
+            end,
+            sell_self = function(self, context)
+                if self.ability.invert_rounds >= self.ability.extra then
+                    G.E_MANAGER:add_event(Event({
+                        func = (function()
+                            add_tag(Tag('tag_negative'))
+                            play_sound('generic1', 0.9 + math.random()*0.1, 0.8)
+                            play_sound('holo1', 1.2 + math.random()*0.1, 0.4)
+                            return true
+                        end)
+                    }))
+                end
+            end,
+            end_round = function(self, context)
+                self.ability.invert_rounds = self.ability.invert_rounds + 1
+                if self.ability.invert_rounds == self.ability.extra then 
+                    local eval = function(card) return not card.REMOVED end
+                    juice_card_until(self, eval, true)
+                end
+                return {
+                    message = (self.ability.invert_rounds < self.ability.extra) and (self.ability.invert_rounds..'/'..self.ability.extra) or localize('k_active_ex'),
+                    colour = G.C.FILTER
+                }
+            end
+        }
+    },{
+        name = "Inverted Joker",
+        text = {
+            "After 3 rounds,",
+            "sell this to gain ",
+            "a free {C:attention}Negative Tag{}"
         }
     });
 end
@@ -117,29 +165,28 @@ function Free_Sample()
         name = "Free Sample",
         set = "Joker",
         config = {
-            to_do_poker_hand = nil;
             extra = {
                 hands = 1
             }
         },
-        loc_var_func = function(self) return {self.ability.to_do_poker_hand} end,
+        loc_var_func = function(self) return {self.ability.free_sample_poker_hand} end,
         abilities = {
             init = function (self)
                 local _poker_hands = {}
                 for k, v in pairs(G.GAME.hands) do
                     if v.visible then _poker_hands[#_poker_hands+1] = k end
                 end
-                local old_hand = self.ability.to_do_poker_hand
-                self.ability.to_do_poker_hand = nil
+                local old_hand = self.ability.free_sample_poker_hand
+                self.ability.free_sample_poker_hand = nil
 
-                while not self.ability.to_do_poker_hand do
-                    self.ability.to_do_poker_hand = pseudorandom_element(_poker_hands, pseudoseed((self.area and self.area.config.type == 'title') and 'false_freesample' or 'freesample'))
-                    if self.ability.to_do_poker_hand == old_hand then self.ability.to_do_poker_hand = nil end
+                while not self.ability.free_sample_poker_hand do
+                    self.ability.free_sample_poker_hand = pseudorandom_element(_poker_hands, pseudoseed((self.area and self.area.config.type == 'title') and 'false_freesample' or 'freesample'))
+                    if self.ability.free_sample_poker_hand == old_hand then self.ability.free_sample_poker_hand = nil end
                 end
             end,
 
             post_joker = function(self, context) 
-                if context.scoring_name == self.ability.to_do_poker_hand then
+                if context.scoring_name == self.ability.free_sample_poker_hand then
                     G.E_MANAGER:add_event(Event({func = function()
                         ease_hands_played(self.ability.extra.hands)
                         card_eval_status_text(context.blueprint_card or self, 'extra', nil, nil, nil, {message = localize{type = 'variable', key = 'a_hands', vars = {self.ability.extra.hands}}})
@@ -150,12 +197,12 @@ function Free_Sample()
                 for k, v in pairs(G.GAME.hands) do
                     if v.visible then _poker_hands[#_poker_hands+1] = k end
                 end
-                local old_hand = self.ability.to_do_poker_hand
-                self.ability.to_do_poker_hand = nil
+                local old_hand = self.ability.free_sample_poker_hand
+                self.ability.free_sample_poker_hand = nil
 
-                while not self.ability.to_do_poker_hand do
-                    self.ability.to_do_poker_hand = pseudorandom_element(_poker_hands, pseudoseed((self.area and self.area.config.type == 'title') and 'false_freesample' or 'freesample'))
-                    if self.ability.to_do_poker_hand == old_hand then self.ability.to_do_poker_hand = nil end
+                while not self.ability.free_sample_poker_hand do
+                    self.ability.free_sample_poker_hand = pseudorandom_element(_poker_hands, pseudoseed((self.area and self.area.config.type == 'title') and 'false_freesample' or 'freesample'))
+                    if self.ability.free_sample_poker_hand == old_hand then self.ability.free_sample_poker_hand = nil end
                 end
             end
         }
@@ -212,21 +259,20 @@ function Executioner()
         name = "Executioner",
         set = "Joker",
         config = {
-            to_do_poker_hand = nil
         },
-        loc_var_func = function(self) return {self.ability.to_do_poker_hand} end,
+        loc_var_func = function(self) return {self.ability.executioner_poker_hand} end,
         abilities = {
             init = function (self)
                 local _poker_hands = {}
                 for k, v in pairs(G.GAME.hands) do
                     if v.visible then _poker_hands[#_poker_hands+1] = k end
                 end
-                local old_hand = self.ability.to_do_poker_hand
-                self.ability.to_do_poker_hand = nil
+                local old_hand = self.ability.executioner_poker_hand
+                self.ability.executioner_poker_hand = nil
 
-                while not self.ability.to_do_poker_hand do
-                    self.ability.to_do_poker_hand = pseudorandom_element(_poker_hands, pseudoseed((self.area and self.area.config.type == 'title') and 'false_executioner' or 'executioner'))
-                    if self.ability.to_do_poker_hand == old_hand then self.ability.to_do_poker_hand = nil end
+                while not self.ability.executioner_poker_hand do
+                    self.ability.executioner_poker_hand = pseudorandom_element(_poker_hands, pseudoseed((self.area and self.area.config.type == 'title') and 'false_executioner' or 'executioner'))
+                    if self.ability.executioner_poker_hand == old_hand then self.ability.executioner_poker_hand = nil end
                 end
             end,
             end_round = function (self)
@@ -234,12 +280,12 @@ function Executioner()
                 for k, v in pairs(G.GAME.hands) do
                     if v.visible then _poker_hands[#_poker_hands+1] = k end
                 end
-                local old_hand = self.ability.to_do_poker_hand
-                self.ability.to_do_poker_hand = nil
+                local old_hand = self.ability.executioner_poker_hand
+                self.ability.executioner_poker_hand = nil
 
-                while not self.ability.to_do_poker_hand do
-                    self.ability.to_do_poker_hand = pseudorandom_element(_poker_hands, pseudoseed((self.area and self.area.config.type == 'title') and 'false_executioner' or 'executioner'))
-                    if self.ability.to_do_poker_hand == old_hand then self.ability.to_do_poker_hand = nil end
+                while not self.ability.executioner_poker_hand do
+                    self.ability.executioner_poker_hand = pseudorandom_element(_poker_hands, pseudoseed((self.area and self.area.config.type == 'title') and 'false_executioner' or 'executioner'))
+                    if self.ability.executioner_poker_hand == old_hand then self.ability.executioner_poker_hand = nil end
                 end
             end,
             start_round = function(self, context) 
@@ -249,7 +295,7 @@ function Executioner()
                 end
             end,
             post_joker = function (self, context)
-                if G.GAME.current_round.hands_played == 0 and context.scoring_name == self.ability.to_do_poker_hand then
+                if G.GAME.current_round.hands_played == 0 and context.scoring_name == self.ability.executioner_poker_hand then
                     local destroyed_cards = {}
                     for i=1, #context.scoring_hand do
                         destroyed_cards[#destroyed_cards + 1] = context.scoring_hand[i]
@@ -410,6 +456,7 @@ table.insert(mods,
             Baba()
             Executioner()
             Missing_Texture()
+            Inverted_Joker()
             GE:refresh_items()
         end,
 
